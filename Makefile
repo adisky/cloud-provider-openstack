@@ -108,6 +108,12 @@ manila-provisioner: depend $(SOURCES)
 		-o manila-provisioner \
 		cmd/manila-provisioner/main.go
 
+barbican-kms-plugin: depend $(SOURCES)
+	cd $(DEST) && CGO_ENABLED=0 GOOS=&(GOOS) go build \
+		-ldflags $(LDFLAGS) \
+		-o barbican-kms-plugin \
+		cmd/barbican-kms-plugin/main.go
+
 test: unit functional
 
 check: depend fmt vet lint
@@ -185,7 +191,7 @@ realclean: clean
 shell:
 	$(SHELL) -i
 
-images: image-controller-manager image-flex-volume-driver image-provisioner image-csi-plugin image-k8s-keystone-auth image-octavia-ingress-controller image-manila-provisioner
+images: image-controller-manager image-flex-volume-driver image-provisioner image-csi-plugin image-k8s-keystone-auth image-octavia-ingress-controller image-manila-provisioner barbican-kms-plugin
 
 image-controller-manager: depend openstack-cloud-controller-manager
 ifeq ($(GOOS),linux)
@@ -249,6 +255,16 @@ ifeq ($(GOOS),linux)
 else
 	$(error Please set GOOS=linux for building the image)
 endif
+
+image-barbican-kms-plugin: depend barbican-kms-plugin
+ifeq ($(GOOS),linux)
+        cp barbican-kms-plugin cluster/images/barbican-kms-plugin
+        docker build -t $(REGISTRY)/cinder-csi-plugin:$(VERSION) cluster/images/barbican-kms-plugin
+        rm cluster/images/cinder-csi-plugin/cinder-csi-plugin
+else
+        $(error Please set GOOS=linux for building the image)
+endif
+
 
 upload-images: images
 	@echo "push images to $(REGISTRY)"

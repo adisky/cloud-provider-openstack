@@ -35,12 +35,11 @@ func init() {
 }
 
 func main() {
-
 	flag.CommandLine.Parse([]string{})
 
 	cmd := &cobra.Command{
-		Use:   "openstack-key-manager",
-		Short: "Openstack Key Manager Service",
+		Use:   "barbican-kms-plugin",
+		Short: "Barbican KMS plugin for kubernetes",
 		Run: func(cmd *cobra.Command, args []string) {
 			handle()
 		},
@@ -48,9 +47,10 @@ func main() {
 
 	cmd.Flags().AddGoFlagSet(flag.CommandLine)
 
-	cmd.PersistentFlags().StringVar(&socketpath, "socketpath", "", "OpenStack KMS Plugin unix socket endpoint")
+	cmd.PersistentFlags().StringVar(&socketpath, "socketpath", "", "Barbican KMS Plugin unix socket endpoint")
+	cmd.MarkPersistentFlagRequired("socketpath")
 
-	cmd.PersistentFlags().StringVar(&cloudconfig, "cloud-config", "", "OpenStack KMS Plugin cloud config")
+	cmd.PersistentFlags().StringVar(&cloudconfig, "cloud-config", "", "Barbican KMS Plugin cloud config")
 	cmd.MarkPersistentFlagRequired("cloud-config")
 
 	if err := cmd.Execute(); err != nil {

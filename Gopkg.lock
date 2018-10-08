@@ -243,7 +243,7 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:25e1d9871de7481cc175cb679e7f56e84ddf9f6f38eac492fdac1d5fdf751267"
+  digest = "1:3af2036c93d41d3e17515deaab6e225e8a0c46d65abe9c0779e7bbab3564a648"
   name = "github.com/gophercloud/gophercloud"
   packages = [
     ".",
@@ -264,6 +264,7 @@
     "openstack/identity/v2/tokens",
     "openstack/identity/v3/extensions/trusts",
     "openstack/identity/v3/tokens",
+    "openstack/keymanager/v1/secrets",
     "openstack/loadbalancer/v2/l7policies",
     "openstack/loadbalancer/v2/listeners",
     "openstack/loadbalancer/v2/loadbalancers",
@@ -929,7 +930,7 @@
   version = "kubernetes-1.11.0"
 
 [[projects]]
-  digest = "1:5103fe5e361663c4ae7c6eec29470ba13a188df9ef4cb06e5694a7b814287425"
+  digest = "1:2dbd420be67e9b1d20e550b0cc2959ea29982b62e3bcdce2e51fc2eb6c791190"
   name = "k8s.io/apiserver"
   packages = [
     "pkg/admission",
@@ -1007,6 +1008,7 @@
     "pkg/storage/storagebackend",
     "pkg/storage/storagebackend/factory",
     "pkg/storage/value",
+    "pkg/storage/value/encrypt/envelope/v1beta1",
     "pkg/util/feature",
     "pkg/util/flag",
     "pkg/util/flushwriter",
@@ -1319,6 +1321,7 @@
     "github.com/gophercloud/gophercloud/openstack/compute/v2/servers",
     "github.com/gophercloud/gophercloud/openstack/identity/v3/extensions/trusts",
     "github.com/gophercloud/gophercloud/openstack/identity/v3/tokens",
+    "github.com/gophercloud/gophercloud/openstack/keymanager/v1/secrets",
     "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/l7policies",
     "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/listeners",
     "github.com/gophercloud/gophercloud/openstack/loadbalancer/v2/loadbalancers",
@@ -1358,6 +1361,7 @@
     "github.com/stretchr/testify/mock",
     "golang.org/x/crypto/ssh/terminal",
     "golang.org/x/net/context",
+    "google.golang.org/grpc",
     "google.golang.org/grpc/codes",
     "google.golang.org/grpc/status",
     "gopkg.in/gcfg.v1",
@@ -1378,6 +1382,7 @@
     "k8s.io/apiserver/pkg/authentication/user",
     "k8s.io/apiserver/pkg/authorization/authorizer",
     "k8s.io/apiserver/pkg/server/healthz",
+    "k8s.io/apiserver/pkg/storage/value/encrypt/envelope/v1beta1",
     "k8s.io/apiserver/pkg/util/feature",
     "k8s.io/apiserver/pkg/util/flag",
     "k8s.io/apiserver/pkg/util/logs",

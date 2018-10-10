@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"strings"
 
-	"github.com/golang/glog"
+	_ "github.com/golang/glog"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/keymanager/v1/secrets"
@@ -26,6 +26,10 @@ func (cfg Config) toAuthOptions() gophercloud.AuthOptions {
 	}
 }
 
+type KMSOpts struct {
+	KeyID string `gcfg:"key-id"`
+}
+
 //Config to read config options
 type Config struct {
 	Global struct {
@@ -39,6 +43,7 @@ type Config struct {
 		DomainName string `gcfg:"domain-name"`
 		Region     string
 	}
+	KeyManager KMSOpts
 }
 
 // Barbican is gophercloud service client
@@ -92,16 +97,16 @@ func (client *Barbican) CreateSecret(data []byte) ([]byte, error) {
 }
 
 // GetSecret gets unencrypted secret
-func (client *Barbican) GetSecret(data []byte) ([]byte, error) {
+func (client *Barbican) GetSecret(keyID string) ([]byte, error) {
 
 	opts := secrets.GetPayloadOpts{
 		PayloadContentType: "application/octet-stream",
 	}
 
-	plain, err := secrets.GetPayload(client.Client, string(data), opts).Extract()
+	key, err := secrets.GetPayload(client.Client, keyID, opts).Extract()
 	if err != nil {
 		return nil, err
 	}
 
-	return plain, nil
+	return key, nil
 }

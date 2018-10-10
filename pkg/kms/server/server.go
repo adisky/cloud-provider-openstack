@@ -11,6 +11,7 @@ import (
 	gcfg "gopkg.in/gcfg.v1"
 	pb "k8s.io/apiserver/pkg/storage/value/encrypt/envelope/v1beta1"
 	"k8s.io/cloud-provider-openstack/pkg/kms/barbican"
+	"k8s.io/cloud-provider-openstack/pkg/kms/encryption/aescbc"
 )
 
 const (
@@ -94,9 +95,17 @@ func (s *server) Decrypt(ctx context.Context, req *pb.DecryptRequest) (*pb.Decry
 		return nil, err
 	}
 
-	plain, err := barbicanClient.GetSecret(req.Cipher)
+	keyID := cfg.KeyManager.KeyID
+
+	key, err := barbicanClient.GetSecret(keyID)
 	if err != nil {
-		glog.V(4).Infof("Failed to get secret %v: ", err)
+		glog.V(4).Infof("Failed to get key %v: ", err)
+		return nil, err
+	}
+
+	plain, err := aescbc.Decrypt(req.Cipher, key)
+	if err != nil {
+		glog.V(4).Infof("Failed to decrypt data %v: ", err)
 		return nil, err
 	}
 
@@ -113,11 +122,20 @@ func (s *server) Encrypt(ctx context.Context, req *pb.EncryptRequest) (*pb.Encry
 		return nil, err
 	}
 
-	cipher, err := barbicanClient.CreateSecret(req.Plain)
+	keyID := cfg.KeyManager.KeyID
+
+	key, err := barbicanClient.GetSecret(keyID)
+
 	if err != nil {
-		glog.V(4).Infof("Failed to create secret %v: ", err)
+		glog.V(4).Infof("Failed to get key %v: ", err)
 		return nil, err
 	}
 
+	cipher, err := aescbc.Encrypt(req.Plain, key)
+
+	if err != nil {
+		glog.V(4).Infof("Failed to encrypt data %v: ", err)
+		return nil, err
+	}
 	return &pb.EncryptResponse{Cipher: cipher}, nil
 }

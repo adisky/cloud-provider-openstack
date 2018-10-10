@@ -259,8 +259,8 @@ endif
 image-barbican-kms-plugin: depend barbican-kms-plugin
 ifeq ($(GOOS),linux)
         cp barbican-kms-plugin cluster/images/barbican-kms-plugin
-        docker build -t $(REGISTRY)/cinder-csi-plugin:$(VERSION) cluster/images/barbican-kms-plugin
-        rm cluster/images/cinder-csi-plugin/cinder-csi-plugin
+        docker build -t $(REGISTRY)/barbican-kms-plugin:$(VERSION) cluster/images/barbican-kms-plugin
+        rm cluster/images/barbican-kms-plugin/barbican-kms-plugin
 else
         $(error Please set GOOS=linux for building the image)
 endif

@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"strings"
 
-	_ "github.com/golang/glog"
+	"github.com/golang/glog"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/keymanager/v1/secrets"
@@ -99,6 +99,8 @@ func (client *Barbican) CreateSecret(data []byte) ([]byte, error) {
 // GetSecret gets unencrypted secret
 func (client *Barbican) GetSecret(keyID string) ([]byte, error) {
 
+        glog.V(3).Infof("Getting key from barbican %s:", keyID)
+
 	opts := secrets.GetPayloadOpts{
 		PayloadContentType: "application/octet-stream",
 	}
@@ -107,6 +109,8 @@ func (client *Barbican) GetSecret(keyID string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
+        glog.V(3).Infof("Key from barbican %s:", key)
 
 	return key, nil
 }

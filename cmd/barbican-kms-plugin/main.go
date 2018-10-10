@@ -22,7 +22,7 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-	"k8s.io/cloud-provider-openstack/pkg/kms/barbican/server"
+	"k8s.io/cloud-provider-openstack/pkg/kms/server"
 )
 
 var (

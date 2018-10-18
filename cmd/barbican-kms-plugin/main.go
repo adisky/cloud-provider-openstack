@@ -20,8 +20,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"os/signal"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/sys/unix"
 	"k8s.io/cloud-provider-openstack/pkg/kms/server"
 )
 
@@ -40,8 +42,11 @@ func main() {
 	cmd := &cobra.Command{
 		Use:   "barbican-kms-plugin",
 		Short: "Barbican KMS plugin for kubernetes",
-		Run: func(cmd *cobra.Command, args []string) {
-			handle()
+		RunE: func(cmd *cobra.Command, args []string) error {
+			sigchan := make(chan os.Signal, 1)
+			signal.Notify(sigchan, unix.SIGTERM, unix.SIGINT)
+			err := server.Run(cloudconfig, socketpath, sigchan)
+			return err
 		},
 	}
 
@@ -59,8 +64,4 @@ func main() {
 	}
 
 	os.Exit(0)
-}
-
-func handle() {
-	server.Run(cloudconfig, socketpath)
 }

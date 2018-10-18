@@ -1,12 +1,13 @@
 package server
 
 import (
+	"fmt"
 	"net"
 	"os"
-	"syscall"
 
 	"github.com/golang/glog"
 	"golang.org/x/net/context"
+	"golang.org/x/sys/unix"
 	"google.golang.org/grpc"
 	gcfg "gopkg.in/gcfg.v1"
 	pb "k8s.io/apiserver/pkg/storage/value/encrypt/envelope/v1beta1"
@@ -15,7 +16,6 @@ import (
 )
 
 const (
-	// Unix Domain Socket
 	netProtocol    = "unix"
 	version        = "v1beta1"
 	runtimename    = "barbican"
@@ -31,44 +31,48 @@ func initConfig(configFilePath string) error {
 	config, err := os.Open(configFilePath)
 	defer config.Close()
 	if err != nil {
-		glog.V(3).Infof("Failed to open OpenStack configuration file: %v", err)
 		return err
 	}
-
 	err = gcfg.FatalOnly(gcfg.ReadInto(&cfg, config))
-
 	if err != nil {
-		glog.V(3).Infof("Failed to read OpenStack configuration file: %v", err)
 		return err
 	}
-
 	return nil
 }
 
 // Run Grpc server for barbican KMS
-func Run(configFilePath string, socketpath string) {
+func Run(configFilePath string, socketpath string, sigchan <-chan os.Signal) error {
 
 	glog.Infof("Barbican KMS Plugin Starting Version: %s, RunTimeVersion: %s", version, runtimeversion)
 
 	if err := initConfig(configFilePath); err != nil {
 		glog.V(4).Infof("Error in Getting Config File: %v", err)
+		return err
 	}
 
 	// unlink the unix socket
-	if err := syscall.Unlink(socketpath); err != nil {
+	if err := unix.Unlink(socketpath); err != nil {
 		glog.V(4).Infof("Error to unlink unix socket: %v", err)
 	}
 
 	listener, err := net.Listen(netProtocol, socketpath)
 	if err != nil {
 		glog.Fatalf("Failed to Listen: %v", err)
+		return err
 	}
 
 	s := grpc.NewServer()
 	pb.RegisterKeyManagementServiceServer(s, &server{})
 
-	if err := s.Serve(listener); err != nil {
-		glog.Fatalf("failed to serve: %v", err)
+	go s.Serve(listener)
+
+	for {
+		sig := <-sigchan
+		if sig == unix.SIGINT || sig == unix.SIGTERM {
+			fmt.Println("force stop, shutting down grpc server")
+			s.GracefulStop()
+			return nil
+		}
 	}
 }
 

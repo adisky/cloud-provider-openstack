@@ -1,10 +1,6 @@
 package barbican
 
 import (
-	"encoding/base64"
-	"strings"
-
-	"github.com/golang/glog"
 	"github.com/gophercloud/gophercloud"
 	"github.com/gophercloud/gophercloud/openstack"
 	"github.com/gophercloud/gophercloud/openstack/keymanager/v1/secrets"
@@ -70,36 +66,8 @@ func NewBarbicanClient(cfg *Config) (*Barbican, error) {
 	return &Barbican{Client: client}, nil
 }
 
-// CreateSecret creates a secret from payload
-func (client *Barbican) CreateSecret(data []byte) ([]byte, error) {
-
-	//TODO:add prefix with name or data
-	encode := base64.StdEncoding.EncodeToString(data)
-
-	opts := secrets.CreateOpts{
-		Payload:                encode,
-		PayloadContentType:     "application/octet-stream",
-		SecretType:             "symmetric",
-		PayloadContentEncoding: "base64",
-	}
-
-	// we are storing data encryption key id from barbican
-	// we will store encrypted dek, once the bp gets implemented
-	response, err := secrets.Create(client.Client, opts).Extract()
-	if err != nil {
-		return nil, err
-	}
-
-	href := response.SecretRef
-	id := strings.Split(href, "/")
-
-	return []byte(id[5]), nil
-}
-
 // GetSecret gets unencrypted secret
 func (client *Barbican) GetSecret(keyID string) ([]byte, error) {
-
-        glog.V(3).Infof("Getting key from barbican %s:", keyID)
 
 	opts := secrets.GetPayloadOpts{
 		PayloadContentType: "application/octet-stream",
@@ -109,8 +77,6 @@ func (client *Barbican) GetSecret(keyID string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-
-        glog.V(3).Infof("Key from barbican %s:", key)
 
 	return key, nil
 }

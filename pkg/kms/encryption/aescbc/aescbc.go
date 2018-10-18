@@ -6,13 +6,14 @@ import (
 	"crypto/cipher"
 	"crypto/rand"
 	"io"
-        "github.com/golang/glog"
+
+	"github.com/golang/glog"
 )
 
 // Encrypt plain text
 func Encrypt(data, key []byte) (ciphertext []byte, err error) {
 
-        glog.V(3).Infof("aescbc encrypt")
+	glog.V(3).Infof("aescbc encrypt")
 
 	// NewCipher returns a new cipher block, the key argument should be AES key
 	// either 16, 24 or 32 bytes to select AES-128, AES-192, AES-256, 32 byte is preferred
@@ -38,14 +39,14 @@ func Encrypt(data, key []byte) (ciphertext []byte, err error) {
 	mode := cipher.NewCBCEncrypter(block, iv)
 	mode.CryptBlocks(ciphertext[aes.BlockSize:], plaintext)
 
-        glog.V(3).Infof("aescbc encrypt %s", string(ciphertext))
+	glog.V(3).Infof("aescbc encrypt %s", string(ciphertext))
 
 	return
 }
 
 // Decrypt plaintext
 func Decrypt(data, key []byte) (plaintext []byte, err error) {
-        glog.V(3).Infof("aescbc decrypt")
+	glog.V(3).Infof("aescbc decrypt")
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -64,7 +65,7 @@ func Decrypt(data, key []byte) (plaintext []byte, err error) {
 	paddingLength := int(ciphertext[len(ciphertext)-1])
 	dataLength := len(ciphertext) - paddingLength
 	plaintext = ciphertext[:dataLength]
-        glog.V(3).Infof("aescbc decrypt %s", string(plaintext))
+	glog.V(3).Infof("aescbc decrypt %s", string(plaintext))
 
 	return
 }

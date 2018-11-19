@@ -22,36 +22,40 @@ const (
 	runtimeversion = "0.0.1"
 )
 
-type server struct{}
+// KMSserver struct
+type KMSserver struct {
+	cfg      *barbican.Config
+	barbican barbican.BarbicanService
+}
 
-var cfg barbican.Config
-
-func initConfig(configFilePath string) error {
+func initConfig(configFilePath string) (cfg *barbican.Config, err error) {
 
 	config, err := os.Open(configFilePath)
 	defer config.Close()
 	if err != nil {
-		return err
+		return nil, err
 	}
-	err = gcfg.FatalOnly(gcfg.ReadInto(&cfg, config))
+	err = gcfg.FatalOnly(gcfg.ReadInto(cfg, config))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return cfg, nil
 }
 
 // Run Grpc server for barbican KMS
-func Run(configFilePath string, socketpath string, sigchan <-chan os.Signal) error {
+func Run(configFilePath string, socketpath string, sigchan <-chan os.Signal) (err error) {
 
 	glog.Infof("Barbican KMS Plugin Starting Version: %s, RunTimeVersion: %s", version, runtimeversion)
-
-	if err := initConfig(configFilePath); err != nil {
+	s := new(KMSserver)
+	s.cfg, err = initConfig(configFilePath)
+	s.barbican = &barbican.Barbican{}
+	if err != nil {
 		glog.V(4).Infof("Error in Getting Config File: %v", err)
 		return err
 	}
 
 	// unlink the unix socket
-	if err := unix.Unlink(socketpath); err != nil {
+	if err = unix.Unlink(socketpath); err != nil {
 		glog.V(4).Infof("Error to unlink unix socket: %v", err)
 	}
 
@@ -61,22 +65,23 @@ func Run(configFilePath string, socketpath string, sigchan <-chan os.Signal) err
 		return err
 	}
 
-	s := grpc.NewServer()
-	pb.RegisterKeyManagementServiceServer(s, &server{})
+	gServer := grpc.NewServer()
+	pb.RegisterKeyManagementServiceServer(gServer, s)
 
-	go s.Serve(listener)
+	go gServer.Serve(listener)
 
 	for {
 		sig := <-sigchan
 		if sig == unix.SIGINT || sig == unix.SIGTERM {
 			fmt.Println("force stop, shutting down grpc server")
-			s.GracefulStop()
+			gServer.GracefulStop()
 			return nil
 		}
 	}
 }
 
-func (s *server) Version(ctx context.Context, req *pb.VersionRequest) (*pb.VersionResponse, error) {
+// Version returns KMS service version
+func (s *KMSserver) Version(ctx context.Context, req *pb.VersionRequest) (*pb.VersionResponse, error) {
 
 	glog.V(4).Infof("Version Information Requested by Kubernetes api server")
 
@@ -89,19 +94,12 @@ func (s *server) Version(ctx context.Context, req *pb.VersionRequest) (*pb.Versi
 	return res, nil
 }
 
-func (s *server) Decrypt(ctx context.Context, req *pb.DecryptRequest) (*pb.DecryptResponse, error) {
+// Decrypt decrypts the cipher
+func (s *KMSserver) Decrypt(ctx context.Context, req *pb.DecryptRequest) (*pb.DecryptResponse, error) {
 
 	glog.V(4).Infof("Decrypt Request by Kubernetes api server")
 
-	barbicanClient, err := barbican.NewBarbicanClient(&cfg)
-	if err != nil {
-		glog.V(4).Infof("Failed to get Barbican client %v: ", err)
-		return nil, err
-	}
-
-	keyID := cfg.KeyManager.KeyID
-
-	key, err := barbicanClient.GetSecret(keyID)
+	key, err := s.barbican.GetSecret(s.cfg)
 	if err != nil {
 		glog.V(4).Infof("Failed to get key %v: ", err)
 		return nil, err
@@ -116,19 +114,12 @@ func (s *server) Decrypt(ctx context.Context, req *pb.DecryptRequest) (*pb.Decry
 	return &pb.DecryptResponse{Plain: plain}, nil
 }
 
-func (s *server) Encrypt(ctx context.Context, req *pb.EncryptRequest) (*pb.EncryptResponse, error) {
+// Encrypt encrypts DEK
+func (s *KMSserver) Encrypt(ctx context.Context, req *pb.EncryptRequest) (*pb.EncryptResponse, error) {
 
 	glog.V(4).Infof("Encrypt Request by Kubernetes api server")
 
-	barbicanClient, err := barbican.NewBarbicanClient(&cfg)
-	if err != nil {
-		glog.V(4).Infof("Failed to get Barbican client %v: ", err)
-		return nil, err
-	}
-
-	keyID := cfg.KeyManager.KeyID
-
-	key, err := barbicanClient.GetSecret(keyID)
+	key, err := s.barbican.GetSecret(s.cfg)
 
 	if err != nil {
 		glog.V(4).Infof("Failed to get key %v: ", err)

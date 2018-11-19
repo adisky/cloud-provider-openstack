@@ -5,6 +5,7 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
+	"errors"
 	"io"
 
 	"github.com/golang/glog"
@@ -56,7 +57,7 @@ func Decrypt(data, key []byte) (plaintext []byte, err error) {
 	ciphertext := data[aes.BlockSize:]
 
 	if len(ciphertext)%aes.BlockSize != 0 {
-		return nil, err
+		return nil, errors.New("Invalid Data, not multiple of block size")
 	}
 
 	mode := cipher.NewCBCDecrypter(block, iv)

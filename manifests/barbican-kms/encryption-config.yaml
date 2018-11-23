@@ -6,6 +6,6 @@ resources:
     providers:
     - kms:
         name : barbican
-        endpoint: unix:///tmp/socketfile.sock
+        endpoint: unix:///kms/kms.sock
         cachesize: 20
     - identity: {}

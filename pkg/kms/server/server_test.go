@@ -1,38 +1,42 @@
 package server
 
 import (
+	"bytes"
 	"testing"
-
-	"k8s.io/cloud-provider-openstack/pkg/kms/barbican"
 
 	"golang.org/x/net/context"
 	pb "k8s.io/apiserver/pkg/storage/value/encrypt/envelope/v1beta1"
+	"k8s.io/cloud-provider-openstack/pkg/kms/barbican"
 )
+
+var s = new(KMSserver)
 
 func TestInitConfig(t *testing.T) {
 
 }
 
-/*
 func TestVersion(t *testing.T) {
 	req := &pb.VersionRequest{Version: "v1beta1"}
-	resp, err := s.Version(context.TODO(), req)
-	t.Log(resp)
-	t.Log(err)
-
+	_, err := s.Version(context.TODO(), req)
+	if err != nil {
+		t.FailNow()
+	}
 }
-*/
 
 func TestEncryptDecrypt(t *testing.T) {
-	s := new(KMSserver)
 	s.barbican = &barbican.FakeBarbican{}
 	fakeData := []byte("fakedata")
-	req := &pb.EncryptRequest{Version: "v1beta1", Plain: fakeData}
-	resp, err := s.Encrypt(context.TODO(), req)
+	encreq := &pb.EncryptRequest{Version: "v1beta1", Plain: fakeData}
+	encresp, err := s.Encrypt(context.TODO(), encreq)
 	if err != nil {
 		t.Log(err)
 		t.FailNow()
 	}
-	t.Log(resp)
+	decreq := &pb.DecryptRequest{Version: "v1beta1", Cipher: encresp.Cipher}
+	decresp, err := s.Decrypt(context.TODO(), decreq)
+	if err != nil || !bytes.Equal(decresp.Plain, fakeData) {
+		t.Log(err)
+		t.FailNow()
+	}
 
 }

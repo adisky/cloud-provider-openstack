@@ -52,7 +52,7 @@ func (cfg Config) toAuthOptions() gophercloud.AuthOptions {
 }
 
 // NewBarbicanClient creates new BarbicanClient
-func NewBarbicanClient(cfg *Config) (client *gophercloud.ServiceClient, err error) {
+func newBarbicanClient(cfg *Config) (client *gophercloud.ServiceClient, err error) {
 
 	provider, err := openstack.AuthenticatedClient(cfg.toAuthOptions())
 
@@ -73,7 +73,7 @@ func NewBarbicanClient(cfg *Config) (client *gophercloud.ServiceClient, err erro
 // GetSecret gets unencrypted secret
 func (barbican *Barbican) GetSecret(cfg *Config) ([]byte, error) {
 
-	client, err := NewBarbicanClient(cfg)
+	client, err := newBarbicanClient(cfg)
 
 	keyID := cfg.KeyManager.KeyID
 
